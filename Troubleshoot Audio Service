@@ -1,0 +1,77 @@
+Function Main {
+    $userResponse = Read-Host "Are you having audio issues? (Y/N)"
+    
+    If ($userResponse -eq 'N') {
+        Write-Host "Exiting script. No action needed." -ForegroundColor Green
+        Exit
+    }
+    
+    If ($userResponse -eq 'Y') {
+        Write-Host "Please choose an action:" -ForegroundColor Cyan
+        $action = Read-Host "1) Check Audio Service Status and Restart if Needed`n2) Restart Audio Service`n3) Exit script`nConsole"
+    
+        Switch ($action) {
+            '1' {
+                Check-AudioService
+            }
+            '2' {
+                Force-AudioService-Reset
+            }
+            '3' {
+                Write-Host "Exiting script." -ForegroundColor Green
+                Exit
+            }
+            Default {
+                Write-Host "Invalid option selected." -ForegroundColor Red
+            }
+        }
+    } Else {
+        Write-Host "Invalid response. Please enter 'Y' or 'N'." -ForegroundColor Red
+    }
+}
+
+#Variables
+$audioService = Get-Service -Name "Audiosrv"
+$audioStatus = $audioService.Status
+
+
+Function Check-AudioService {
+    Write-Host "Checking Windows Audio Service..." -ForegroundColor Cyan
+    Try {
+        
+        Write-Host "Audio Service Status: $audioStatus" -ForegroundColor Green
+        If ($audioStatus -eq "Running") {
+            Write-Host "Audio service is already running." -ForegroundColor Green
+        } Else {
+            Write-Host "Audio service is not running. Attempting to restart..." -ForegroundColor Yellow
+            Restart-Service -Name "Audiosrv" -Force
+
+            If ($audioStatus -eq "Running") {
+                Write-Host "Audio service restarted successfully." -ForegroundColor Green
+            } Else {
+                Write-Host "Failed to restart the audio service. Further investigation required." -ForegroundColor Red
+            }
+        }
+    } Catch {
+        Write-Host "Error checking or restarting audio service: $_" -ForegroundColor Red
+        Write-Host "Detailed Error: " -ForegroundColor Yellow
+        $_.Exception | Format-List -Force
+    }
+}
+
+Function Force-AudioService-Reset {
+    Write-Host "Restarting Windows Audio Service..." -ForegroundColor Cyan
+
+    Try {
+        Restart-Service -Name "Audiosrv" -Force
+        Write-Host "Audio service reset successfully." -ForegroundColor Green
+    } Catch {
+        Write-Host "Error restarting audio service: $_" -ForegroundColor Red
+        Write-Host "Detailed Error: " -ForegroundColor Yellow
+        $_.Exception | Format-List -Force
+    }
+}
+
+
+
+Main
